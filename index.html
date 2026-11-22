@@ -170,6 +170,28 @@ function saveConnection(){
  connstatus.textContent='Pengaturan disimpan.';
 }
 </script>
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBKRzVjqKWzZomivLLpRBd9YTPqfB1xQIQ",
+  authDomain: "rns-multi-controll.firebaseapp.com",
+  projectId: "rns-multi-controll",
+  storageBucket: "rns-multi-controll.firebasestorage.app",
+  messagingSenderId: "363603188398",
+  appId: "1:363603188398:web:61d4e4c3363ffa112c6b3f",
+  measurementId: "G-67TW3YMV51"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const rnsAuth = firebase.auth();
+const rnsDB = firebase.firestore();
+
+console.log("RNS Firebase terhubung");
+</script>
 </body>
   </html>
   
