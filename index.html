@@ -62,6 +62,9 @@ small{color:#94a3b8}
 <label>Kecerahan</label><input type="range" id="bright" min="1" max="100" value="80">
 <div class="preview" id="preview"></div>
 <button class="primary" onclick="rgb()">TERAPKAN SIMULASI</button>
+ <button onclick="connectWemos()">HUBUNGKAN WEMOS</button>
+<button onclick="sendRGB()">KIRIM KE WEMOS</button>
+<p id="rnsDeviceStatus">Belum terhubung</p>
 </div>
 <div class="card">
 <h2>Kombinasi Kiri dan Kanan</h2>
@@ -220,6 +223,75 @@ async function rnsCreateAdminProfile() {
   }
 }
  </script>
+ 
+<script>
+// RNS REAL DEVICE CONNECTION
+const RNS_DEVICE = {
+  ip: "192.168.4.1",
+  port: 81
+};
+
+let rnsSocket = null;
+let rnsConnected = false;
+
+function connectWemos() {
+  if (rnsSocket && rnsSocket.readyState === WebSocket.OPEN) {
+    return;
+  }
+
+  rnsSocket = new WebSocket(
+    `ws://${RNS_DEVICE.ip}:${RNS_DEVICE.port}/`
+  );
+
+  rnsSocket.onopen = () => {
+    rnsConnected = true;
+    setRNSStatus("Wemos terhubung");
+  };
+
+  rnsSocket.onmessage = (event) => {
+    console.log("Wemos:", event.data);
+    setRNSStatus("Data diterima: " + event.data);
+  };
+
+  rnsSocket.onerror = () => {
+    setRNSStatus("Koneksi gagal");
+  };
+
+  rnsSocket.onclose = () => {
+    rnsConnected = false;
+    setRNSStatus("Wemos terputus");
+  };
+}
+
+function sendRNS(command, data = {}) {
+  if (!rnsSocket || rnsSocket.readyState !== WebSocket.OPEN) {
+    setRNSStatus("Hubungkan Wemos terlebih dahulu");
+    return;
+  }
+
+  rnsSocket.send(JSON.stringify({
+    device: "RNS",
+    command,
+    data
+  }));
+}
+
+function setRNSStatus(message) {
+  const el = document.getElementById("rnsDeviceStatus");
+  if (el) el.textContent = message;
+}
+
+function sendRGB() {
+  sendRNS("RGB", {
+    effect: document.getElementById("effect").value,
+    color1: document.getElementById("c1").value,
+    color2: document.getElementById("c2").value,
+    speed: Number(document.getElementById("speed").value),
+    brightness: Number(document.getElementById("bright").value)
+  });
+}
+</script>
+ 
 </body>
   </html>
   
