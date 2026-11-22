@@ -192,6 +192,34 @@ const rnsDB = firebase.firestore();
 
 console.log("RNS Firebase terhubung");
 </script>
+ <script>
+async function rnsCreateAdminProfile() {
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
+    alert("Silakan login terlebih dahulu.");
+    return;
+  }
+
+  const profileRef = firebase.firestore()
+    .collection("users")
+    .doc(user.uid);
+
+  const profile = await profileRef.get();
+
+  if (!profile.exists) {
+    await profileRef.set({
+      email: user.email,
+      role: "admin",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert("Profil Admin berhasil dibuat!");
+  } else {
+    alert("Profil pengguna sudah tersedia.");
+  }
+}
+ </script>
 </body>
   </html>
   
