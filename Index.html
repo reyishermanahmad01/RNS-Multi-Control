@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RNS Multi Control</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:#f1f5f9;font-family:Arial}
+header{padding:20px;background:#111c30}
+h1{color:#22d3ee;margin:0}
+nav{display:flex;gap:6px;overflow:auto;padding:10px;background:#0d1728}
+button{padding:12px;border:0;border-radius:9px;background:#1e293b;color:white;font-weight:bold}
+button.active,.primary{background:#0891b2}
+main{padding:14px;max-width:800px;margin:auto}
+.panel{display:none}.show{display:block}
+.card{background:#111c30;border:1px solid #26344d;border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.module{padding:22px 5px;background:#17243a}
+input,select{width:100%;padding:11px;margin:7px 0 12px;background:#080d18;color:white;border:1px solid #334155;border-radius:8px}
+input[type=checkbox]{width:auto}
+label{display:block;color:#cbd5e1;font-size:13px}
+.preview{height:70px;border-radius:10px;margin:12px 0;background:#202a3a}
+small{color:#94a3b8}
+</style>
+</head>
+<body>
+<header><h1>RNS MULTI CONTROL</h1><p>RGB • DMX • CAR • CUSTOM</p></header>
+<nav>
+<button class="active" onclick="page('home',this)">HOME</button>
+<button onclick="page('rgb',this)">RGB</button>
+<button onclick="page('dmx',this)">DMX</button>
+<button onclick="page('car',this)">CAR</button>
+<button onclick="page('custom',this)">CUSTOM</button>
+<button onclick="page('settings',this)">SETTING</button>
+</nav>
+<main>
+<section id="home" class="panel show">
+<div class="card">
+<h2>Selamat Datang di RNS</h2>
+<p>Satu aplikasi untuk berbagai modul kontrol.</p>
+<div class="grid">
+<button class="module" onclick="page('rgb')">🌈 RGB CONTROLLER</button>
+<button class="module" onclick="page('dmx')">💡 DMX CONTROL</button>
+<button class="module" onclick="page('car')">🚘 CAR MODULE</button>
+<button class="module" onclick="page('custom')">⚙️ CUSTOM MODULE</button>
+</div>
+</div>
+<div class="card"><h3>Status</h3><p id="status">RNS siap dalam mode lokal.</p></div>
+</section>
+
+<section id="rgb" class="panel">
+<div class="card">
+<h2>RGB Controller</h2>
+<label>Animasi</label>
+<select id="effect">
+<option>Static Color</option><option>Running</option><option>Chasing</option><option>Breathing</option><option>Rainbow</option><option>Police</option><option>Strobe</option><option>Wave</option><option>Dual Color</option><option>Sequential</option>
+</select>
+<label>Warna utama</label><input type="color" id="c1" value="#ff0000">
+<label>Warna kedua</label><input type="color" id="c2" value="#00ffff">
+<label>Kecepatan</label><input type="range" id="speed" min="1" max="100" value="50">
+<label>Kecerahan</label><input type="range" id="bright" min="1" max="100" value="80">
+<div class="preview" id="preview"></div>
+<button class="primary" onclick="rgb()">TERAPKAN SIMULASI</button>
+</div>
+<div class="card">
+<h2>Kombinasi Kiri dan Kanan</h2>
+<label>Mode kiri (maksimal 6)</label><div id="left"></div>
+<label>Mode kanan (maksimal 6)</label><div id="right"></div>
+<label><input type="checkbox" id="auto"> Perpindahan otomatis</label>
+<button class="primary" onclick="combo()">SIMPAN KOMBINASI</button>
+</div>
+</section>
+
+<section id="dmx" class="panel">
+<div class="card">
+<h2>DMX Control</h2>
+<label>Jumlah kanal</label>
+<select id="channels" onchange="makeDMX()"><option>8</option><option>16</option><option>32</option></select>
+<div id="sliders"></div>
+<button class="primary" onclick="save('dmx',channels.value)">SIMPAN SIMULASI</button>
+</div>
+</section>
+
+<section id="car" class="panel">
+<div class="card">
+<h2>CAR Module</h2>
+<p>Panel simulasi kendaraan.</p>
+<button onclick="car('Lampu')">LAMPU</button>
+<button onclick="car('Aksesori')">AKSESORI</button>
+<button onclick="car('Mode')">MODE</button>
+<p id="carstatus">Simulasi belum dijalankan.</p>
+<small>Tidak terhubung ke kendaraan nyata.</small>
+</div>
+</section>
+
+<section id="custom" class="panel">
+<div class="card">
+<h2>Custom Module</h2>
+<label>Nama modul</label><input id="modname" placeholder="Nama modul">
+<label>Keterangan</label><input id="moddesc" placeholder="Keterangan">
+<button class="primary" onclick="addMod()">TAMBAH MODUL</button>
+<div id="modlist"></div>
+</div>
+</section>
+
+<section id="settings" class="panel">
+<div class="card">
+<h2>Pengaturan Wemos</h2>
+<label>Alamat IP</label><input id="ip" value="192.168.4.1">
+<label>Port</label><input id="port" value="81">
+<button class="primary" onclick="saveConnection()">SIMPAN</button>
+<p id="connstatus"></p>
+<small>Pengaturan alamat saja; koneksi perangkat belum diaktifkan.</small>
+</div>
+</section>
+</main>
+<script>
+function page(id,btn){
+ document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+ document.getElementById(id).classList.add('show');
+ document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+}
+const modes=['Static','Running','Chasing','Breathing','Rainbow','Wave','Police','Sequential'];
+function buildModes(id){
+ modes.forEach(m=>{
+  let l=document.createElement('label');
+  let c=document.createElement('input');
+  c.type='checkbox';c.value=m;
+  c.onchange=()=>{if(document.querySelectorAll('#'+id+' input:checked').length>6){c.checked=false;alert('Maksimal 6 mode.')}};
+  l.append(c,document.createTextNode(' '+m));
+  document.getElementById(id).append(l);
+ });
+}
+buildModes('left');buildModes('right');
+function combo(){
+ let d={
+  left:[...document.querySelectorAll('#left input:checked')].map(x=>x.value),
+  right:[...document.querySelectorAll('#right input:checked')].map(x=>x.value),
+  auto:document.getElementById('auto').checked
+ };
+ localStorage.setItem('rnsCombo',JSON.stringify(d));
+ alert('Kombinasi tersimpan.');
+}
+function rgb(){
+ preview.style.background='linear-gradient(90deg,'+c1.value+','+c2.value+')';
+ preview.style.opacity=bright.value/100;
+ status.textContent='Simulasi RGB: '+effect.value;
+}
+function makeDMX(){
+ sliders.innerHTML='';
+ for(let i=1;i<=Number(channels.value);i++){
+  let l=document.createElement('label');l.textContent='Channel '+i;
+  let s=document.createElement('input');s.type='range';s.min=0;s.max=255;s.value=0;
+  sliders.append(l,s);
+ }
+}
+makeDMX();
+function save(k,v){localStorage.setItem('rns_'+k,v);alert('Tersimpan.')}
+function car(n){carstatus.textContent='Simulasi: '+n;}
+function addMod(){
+ let n=modname.value.trim(),d=moddesc.value.trim();
+ if(!n)return alert('Masukkan nama modul.');
+ let p=document.createElement('p');p.textContent=n+' - '+d;
+ modlist.append(p);modname.value='';moddesc.value='';
+}
+function saveConnection(){
+ localStorage.setItem('rnsConnection',JSON.stringify({ip:ip.value,port:port.value}));
+ connstatus.textContent='Pengaturan disimpan.';
+}
+</script>
+</body>
+  </html>
+  
